@@ -42,4 +42,11 @@ while i < len(markLst)-1:
     else:
        i+=1
 
+formattedMarkLst = []
+for i in markLst:
+   formattedMarkLst.append({'question':i[:6],
+                            'content':i[6:-3],
+                            'marks':i[-3:]
+                            })
 
+print(formattedMarkLst)
