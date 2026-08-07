@@ -2,8 +2,11 @@ import os
 import json
 import re
 from datetime import datetime, timezone
+from dotenv import load_dotenv
 from openai import OpenAI
 
+#load environment variables from .env file
+load_dotenv()
 
 #Use Open AI to redirect to featherless API
 client = OpenAI(
@@ -11,7 +14,7 @@ client = OpenAI(
     api_key=os.environ.get("FEATHERLESS_API_KEY")
 )
 
-MODEL_ID = "featherless/meta-llama/Meta-Llama-3.1-8B-Instruct" #using featherless api to use meta-llama model for question answering
+MODEL_ID = "deepseek-ai/DeepSeek-V4-Flash-0731" #using featherless api to use meta-llama model for question answering
 
 def clean_json_string(raw_string: str) -> str:
 
@@ -60,7 +63,7 @@ def generate_question(topic: str, scraped_content: str) -> str:
 
     return response.choices[0].message.content.strip()
 
-def MarkQuestion(
+def mark_question(
     user_id: str, 
     question_id: str, 
     topic_name: str, 
