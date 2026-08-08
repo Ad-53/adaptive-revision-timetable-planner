@@ -6,13 +6,12 @@ since Supabase handles signup, login, logout, sessions, password reset, and
 rate limiting for you — and gives you the database you'll need anyway for
 exam boards, topics, and confidence scores.
 
-## Login/signup/password reset run through Supabase — didn't build that from scratch, just wired it up and built the profile page + protected API route on top.
+Login/signup/password reset run through Supabase — didn't build that from scratch, just wired it up and built the profile page + protected API route on top.
 
 ## Project structure
 
 ```
-adaptive-revision/
-├── supabase/
+supabase/
 │   └── schema.sql          # run this in the Supabase SQL editor
 ├── backend/                # Express API (protected routes only — auth itself goes through Supabase directly)
 │   ├── server.js
@@ -33,7 +32,7 @@ adaptive-revision/
     └── js/
         ├── config.js         # fill in your Supabase URL + anon key here
         ├── supabaseClient.js
-        ├── auth.js
+        ├── requireAuth.js
         ├── signup.js
         ├── login.js
         ├── forgot-password.js
@@ -50,13 +49,24 @@ adaptive-revision/
    row-level security policies, and a trigger that auto-creates a profile row on signup.
 
 3. **Get your API keys.** In Supabase, go to Settings → API:
-   - Copy the **Project URL** and **anon public key** into `frontend/js/config.js`.
+   - Copy the **Project URL** and **anon public key** into `frontend/js/config.js`. Newer
+     Supabase projects show these as `sb_publishable_...` instead of a JWT-style anon key —
+     that's the same thing, just a renamed format. Either works.
    - Copy the **service_role key** into `backend/.env` (copy `.env.example` to `.env` first —
-     never expose this key on the frontend).
+     never expose this key on the frontend). On newer projects this is the `sb_secret_...` key.
+   - When pasting into `.env`, don't include angle brackets or quotes — just the raw
+     value, e.g. `SUPABASE_URL=https://xxxxx.supabase.co`.
 
-4. **Set the redirect URL for password resets.** In Supabase, go to Authentication →
-   URL Configuration, and add your reset-password page (e.g.
-   `http://localhost:5500/reset-password.html` for local dev) to the Redirect URLs list.
+4. **Set the redirect URLs.** In Supabase, go to Authentication → URL Configuration.
+   - Open your local `frontend/index.html` with VS Code's Live Server extension first and
+     check the actual address it opens (port can vary, and if you have the whole repo open
+     rather than just `frontend/`, the URL will include a `/frontend/` segment, e.g.
+     `http://127.0.0.1:5500/frontend/login.html`).
+   - Set **Site URL** to that address's login page, e.g. `http://127.0.0.1:5500/frontend/login.html`
+     — this is where email confirmation links send people after confirming.
+   - Under **Redirect URLs**, add the reset-password page using the same base address, e.g.
+     `http://127.0.0.1:5500/frontend/reset-password.html` — this is where "forgot password"
+     links send people.
 
 5. **Run the backend:**
    ```
