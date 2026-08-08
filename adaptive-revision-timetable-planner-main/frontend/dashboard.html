@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Dashboard - Adaptive Revision</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-theme="light">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">📚 Adaptive Revision</h1>
+            <div class="nav-right">
+                <button id="theme-toggle-btn" class="icon-btn">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <a href="/profile" class="nav-link">Profile</a>
+                <a href="/logout" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h2 style="margin: 0;">Your Revision Dashboard</h2>
+            <p style="color: var(--text-secondary); margin-top: 4px;">Track your progress and stay on top of your studies</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-info">
+                    <div id="questions-answered" class="stat-value">0</div>
+                    <div class="stat-label">Questions Answered</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-info">
+                    <div id="avg-confidence" class="stat-value">--%</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-info">
+                    <div id="exam-countdown" class="stat-value">--</div>
+                    <div class="stat-label">Days to Exam</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div class="stat-info">
+                    <div id="revision-summary" class="stat-value">-- topics</div>
+                    <div class="stat-label">Topics Ready</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Schedule Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Exam Schedule</h2>
+            </div>
+            <div class="card">
+                <form id="exam-form">
+                    <div class="form-group">
+                        <label for="exam-subject" class="form-label">Subject</label>
+                        <input type="text" id="exam-subject" class="form-input" placeholder="e.g., Computer Science A-Level" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="exam-date" class="form-label">Exam Date</label>
+                        <input type="date" id="exam-date" class="form-input" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Exam Schedule</button>
+                </form>
+
+                <!-- Calendar -->
+                <div id="calendar" style="margin-top: 16px;"></div>
+            </div>
+        </section>
+
+        <!-- Topic Management Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Revision Topics</h2>
+            </div>
+            <div class="card">
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <input type="text" id="topic-input" class="form-input" placeholder="Add a new topic..." />
+                    <button id="add-topic-btn" class="btn btn-primary">Add Topic</button>
+                </div>
+                <ul id="topic-list" class="topic-list"></ul>
+                <div id="topic-empty-state" class="empty-state hidden">
+                    <span class="empty-icon">📚</span>
+                    <p>No topics added yet. Add topics to generate your revision plan.</p>
+                </div>
+                <button id="generate-plan-btn" class="btn btn-primary hidden" style="margin-top: 12px;">Generate Revision Plan</button>
+            </div>
+        </section>
+
+        <!-- Flowchart Decomposition Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Flowchart Decomposition</h2>
+            </div>
+            <div class="card">
+                <div id="drop-zone" class="drop-zone">
+                    <span class="drop-icon">📤</span>
+                    <p>Drag and drop a flowchart image here, or</p>
+                    <label class="file-upload-btn">
+                        Browse Files
+                        <input type="file" id="flowchart-upload" accept="image/*" />
+                    </label>
+                </div>
+                <div id="upload-status" style="display: none;"></div>
+                <div id="mermaid-container" class="mermaid-container"></div>
+                <button id="export-mermaid-btn" class="btn btn-secondary hidden" style="margin-top: 12px;">Copy Mermaid Code</button>
+            </div>
+        </section>
+
+        <!-- Revision Queue Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2>Revision Queue</h2>
+            </div>
+            <div class="card">
+                <ul id="topic-queue-list" class="queue-list"></ul>
+
+                <!-- Question Display -->
+                <div id="question-display" style="display: none;">
+                    <div class="question-card">
+                        <div id="question-topic-badge" class="badge-container">
+                            <span>📚</span>
+                            <span>Ready to Start</span>
+                        </div>
+                        <div id="marks-text" class="marks-container">
+                            <span>🎯</span>
+                            <span>-- marks</span>
+                        </div>
+                        <div id="question-content" class="question-content"></div>
+
+                        <button id="next-question-btn" class="btn btn-primary hidden" style="margin-top: 12px;">Next Question</button>
+                        <button id="complete-question-btn" class="btn btn-success hidden">Complete</button>
+                    </div>
+                </div>
+
+                <!-- Answer Input -->
+                <div id="answer-input-container" style="display: none;">
+                    <textarea id="user-answer" placeholder="Type your answer here..." rows="4"></textarea>
+                    <div class="char-count"><span id="char-count">0</span> characters</div>
+
+                    <div class="confidence-slider-container">
+                        <label for="confidence-slider">Confidence Level:</label>
+                        <input type="range" id="confidence-slider" min="1" max="10" value="5" />
+                        <span id="confidence-value">5</span>/10
+                    </div>
+
+                    <button id="submit-answer-btn" class="btn btn-primary">Submit Answer</button>
+                </div>
+
+                <!-- Feedback Display -->
+                <div id="feedback-container" style="display: none;">
+                    <div id="feedback-content" class="feedback-content"></div>
+                    <span id="feedback-score" class="score-badge hidden"></span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div id="loading-text">Processing...</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script>
+        // Config
+        const SUPABASE_URL = "https://jdhlctbbpsfjufvbyufp.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkaGxjdGJicHNmanVmdmJ5dWZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjIxMTgsImV4cCI6MjEwMTY5ODExOH0.wEJeQ4sEGbMOr7-ux5xA3Bd6y8V2zAHbksIFZoTufEk";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Auth helpers
+        async function requireAuth() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    window.location.href = '/login';
+                    return null;
+                }
+                return session;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function redirectIfLoggedIn() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) {
+                    window.location.href = '/';
+                }
+            } catch (e) {}
+        }
+
+        async function logout() {
+            try { await supabaseClient.auth.signOut(); } catch (e) {}
+            window.location.href = '/login';
+        }
+
+        function showMessage(el, text, type) {
+            el.textContent = text;
+            el.className = `message ${type}`;
+            el.classList.remove('hidden');
+        }
+    </script>
+
+    <script>
+        // Dashboard application
+        const API_BASE_URL = window.APP_CONFIG?.BACKEND_URL || 'http://127.0.0.1:5000';
+
+        const app = {
+            state: {
+                isAuthenticated: false,
+                currentView: 'dashboard',
+                token: null,
+                user: null,
+                examData: { subject: '', board: 'AQA', date: '', topics: [] },
+                revisionQueue: [],
+                currentQuestion: null,
+                questionsAnswered: 0,
+                totalConfidence: 0,
+                theme: 'light'
+            },
+
+            init() {
+                try {
+                    const saved = localStorage.getItem('revisionAIState');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        this.state = { ...this.state, ...parsed };
+                    }
+                } catch (e) {}
+                this.setupEventListeners();
+                this.initTheme();
+                this.initMermaid();
+                this.updateExamSummary();
+                this.renderTopicList();
+                this.updateStats();
+                this.updateRevisionView();
+                this.initCalendar();
+            },
+
+            saveState() { localStorage.setItem('revisionAIState', JSON.stringify(this.state)); },
+            initMermaid() { try { mermaid.initialize({ startOnLoad:false, theme:'forest', securityLevel:'loose' }); } catch(e){} },
+            initTheme() { const saved = localStorage.getItem('revisionAITheme'); this.state.theme = saved === 'dark' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', this.state.theme); },
+            toggleTheme() { this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('revisionAITheme', this.state.theme); document.documentElement.setAttribute('data-theme', this.state.theme); },
+
+            setupEventListeners() {
+                const themeToggleBtn = document.getElementById('theme-toggle-btn');
+                if (themeToggleBtn) themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+
+                const addTopicBtn = document.getElementById('add-topic-btn');
+                if (addTopicBtn) addTopicBtn.addEventListener('click', () => this.handleAddTopic());
+
+                const generatePlanBtn = document.getElementById('generate-plan-btn');
+                if (generatePlanBtn) generatePlanBtn.addEventListener('click', () => this.generateRevisionPlan());
+
+                const examForm = document.getElementById('exam-form');
+                if (examForm) examForm.addEventListener('submit', (e) => { e.preventDefault(); this.handleExamSubmit(e); });
+
+                const flowchartInput = document.getElementById('flowchart-upload');
+                if (flowchartInput) flowchartInput.addEventListener('change', (ev) => { if (ev.target.files.length>0) this.handleFileUpload(ev.target.files[0]); });
+
+                const nextQuestionBtn = document.getElementById('next-question-btn');
+                if (nextQuestionBtn) nextQuestionBtn.addEventListener('click', () => this.loadNextQuestion());
+
+                const submitAnswerBtn = document.getElementById('submit-answer-btn');
+                if (submitAnswerBtn) submitAnswerBtn.addEventListener('click', (ev) => this.submitAnswer(ev));
+
+                const completeQuestionBtn = document.getElementById('complete-question-btn');
+                if (completeQuestionBtn) completeQuestionBtn.addEventListener('click', () => this.completeCurrentQuestion());
+            },
+
+            updateExamSummary() {
+                const countdownEl = document.getElementById('exam-countdown');
+                const summaryEl = document.getElementById('revision-summary');
+                if (!countdownEl || !summaryEl) return;
+                if (!this.state.examData.date) {
+                    countdownEl.innerText='--';
+                    summaryEl.innerText='Add topics and generate the plan to see your calendar filled.';
+                    return;
+                }
+                const examDate = new Date(this.state.examData.date);
+                const now = new Date();
+                const deltaDays = Math.max(0, Math.ceil((examDate - now) / (1000*60*60*24)));
+                countdownEl.innerText = deltaDays>0?`${deltaDays} day${deltaDays===1?'':'s'}`:'Today!';
+                summaryEl.innerText = `${this.state.examData.topics.length} topic${this.state.examData.topics.length===1?'':'s'} ready for revision.`;
+            },
+
+            renderTopicList() {
+                const topicList = document.getElementById('topic-list');
+                const emptyState = document.getElementById('topic-empty-state');
+                const generateBtn = document.getElementById('generate-plan-btn');
+                if(!topicList) return;
+                if(this.state.examData.topics.length>0){
+                    emptyState.style.display='none';
+                    generateBtn.classList.remove('hidden');
+                    topicList.innerHTML = this.state.examData.topics.map((t,i)=>`<li class="topic-item"><span>${t}</span><button type="button" class="remove-topic" onclick="app.removeTopic(${i})">Remove</button></li>`).join('');
+                } else {
+                    emptyState.style.display='flex';
+                    generateBtn.classList.add('hidden');
+                    topicList.innerHTML='';
+                }
+            },
+
+            handleAddTopic() {
+                const topicInput = document.getElementById('topic-input');
+                const topicValue = topicInput?.value.trim();
+                if(!topicValue) return;
+                if(!this.state.examData.topics.includes(topicValue)){
+                    this.state.examData.topics.push(topicValue);
+                    this.saveState();
+                    this.renderTopicList();
+                    this.updateStats();
+                    topicInput.value='';
+                } else {
+                    this.showToast('Topic already exists in your list.','warning');
+                }
+            },
+
+            updateStats(){
+                const questionsAnsweredEl=document.getElementById('questions-answered');
+                const avgConfidenceEl=document.getElementById('avg-confidence');
+                if(questionsAnsweredEl) questionsAnsweredEl.innerText=this.state.questionsAnswered;
+                if(avgConfidenceEl && this.state.revisionQueue.length>0){
+                    const total=this.state.revisionQueue.reduce((s,i)=>s+(i.confidence||5),0);
+                    avgConfidenceEl.innerText=`${Math.round(total/this.state.revisionQueue.length)}%`;
+                }
+            },
+
+            handleExamSubmit(e){
+                e.preventDefault();
+                const subject=document.getElementById('exam-subject').value.trim();
+                const date=document.getElementById('exam-date').value;
+                if(!subject||!date){
+                    this.showToast('Please enter both subject and exam date.','error');
+                    return;
+                }
+                this.state.examData.subject=subject;
+                this.state.examData.date=date;
+                this.saveState();
+                this.updateExamSummary();
+                this.initCalendar();
+                this.showToast('Exam saved locally','success');
+            },
+
+            initCalendar(){
+                try{
+                    const calendarEl=document.getElementById('calendar');
+                    if(!calendarEl) return;
+                    if(this.calendar) this.calendar.destroy();
+                    this.calendar = new FullCalendar.Calendar(calendarEl,{
+                        initialView:'dayGridMonth',
+                        headerToolbar:{ left:'prev,next today', center:'title', right:'dayGridMonth,timeGridWeek' },
+                        events: this.getCalendarEvents(),
+                        height:'auto'
+                    });
+                    this.calendar.render();
+                }catch(e){}
+            },
+
+            getCalendarEvents(){
+                const events=[];
+                if(this.state.examData.date) events.push({ title:`📅 EXAM: ${this.state.examData.subject||'Upcoming Exam'}`, start:this.state.examData.date, color:'#ef4444'});
+                this.state.revisionQueue.forEach(item=>events.push({ title:`📋 ${item.topic_name}`, start: item.scheduledAt || this.state.examData.date || new Date().toISOString().slice(0,10), color:'#f59e0b'}));
+                return events;
+            },
+
+            generateRevisionPlan(){
+                if(!this.state.examData.date){
+                    this.showToast('Set exam date first','error');
+                    return;
+                }
+                if(this.state.examData.topics.length===0){
+                    this.showToast('Add topics first','error');
+                    return;
+                }
+                const seq=this.createDateSequence(this.state.examData.date,this.state.examData.topics.length);
+                this.state.revisionQueue=this.state.examData.topics.map((t,i)=>({ id:`q_${Date.now()}_${i}`, topic_name:t, question:`Explain ${t}`, confidence:5, scheduledAt: seq[i] }));
+                this.saveState();
+                this.renderTopicList();
+                this.initCalendar();
+                this.updateRevisionView();
+                this.updateExamSummary();
+                this.updateStats();
+                this.showToast('Plan generated','success');
+            },
+
+            createDateSequence(examDate,itemCount){
+                const result=[];
+                const target=new Date(examDate);
+                const start=new Date(target);
+                start.setDate(target.getDate()-Math.max(7,itemCount*3));
+                for(let i=0;i<itemCount;i++){
+                    const next=new Date(start);
+                    next.setDate(start.getDate()+i*2);
+                    if(next>target) next.setDate(target.getDate()-(itemCount-i));
+                    result.push(next.toISOString().slice(0,10));
+                }
+                return result;
+            },
+
+            loadNextQuestion(){
+                if(this.state.revisionQueue.length===0){
+                    this.showToast('No questions — generate a plan first','warning');
+                    return;
+                }
+                this.showLoading('Generating next question...');
+                setTimeout(()=>{
+                    const next=this.state.revisionQueue.shift();
+                    this.state.currentQuestion=next;
+                    this.saveState();
+                    this.updateRevisionView();
+                    this.showToast('New question loaded!','success');
+                    this.hideLoading();
+                },800);
+            },
+
+            updateRevisionView(){
+                const topicQueueList=document.getElementById('topic-queue-list');
+                const questionDisplay=document.getElementById('question-display');
+                const answerInputContainer=document.getElementById('answer-input-container');
+                const feedbackContainer=document.getElementById('feedback-container');
+                if(topicQueueList) topicQueueList.innerHTML=this.state.revisionQueue.map((item,i)=>`<li class="queue-item"><span>${i+1}. ${item.topic_name}</span><span class="confidence-indicator">${item.confidence||5}/10</span></li>`).join('');
+                if(this.state.currentQuestion){
+                    questionDisplay.style.display='block';
+                    answerInputContainer.style.display='none';
+                    feedbackContainer.style.display='none';
+                    document.getElementById('question-content').innerHTML=`<strong>${this.state.currentQuestion.question}</strong>`;
+                } else {
+                    questionDisplay.style.display='none';
+                    answerInputContainer.style.display='block';
+                    feedbackContainer.style.display='none';
+                    document.getElementById('question-content').innerHTML='<div style="text-align: center; color: var(--text-secondary); padding: 32px;"><span style="font-size: 48px;">💡</span><p>Press <strong>"Next Question"</strong> to load your first adaptive question.</p></div>';
+                }
+            },
+
+            submitAnswer(e){
+                e.preventDefault();
+                const answerText=document.getElementById('user-answer').value.trim();
+                const confidence=Number(document.getElementById('confidence-slider').value);
+                if(!this.state.currentQuestion){
+                    this.showToast('Load a question first','error');
+                    return;
+                }
+                if(!answerText){
+                    this.showToast('Please type your answer before submitting.','error');
+                    return;
+                }
+                const feedbackEl=document.getElementById('feedback-content');
+                feedbackEl.innerHTML='<div style="text-align: center; padding: 24px;"><span style="font-size: 32px;">⏳</span><p>AI is grading your answer...</p></div>';
+                this.showLoading('Grading your answer...');
+                setTimeout(()=>{
+                    const score=Math.floor(Math.random()*6)+4;
+                    const fb='Good effort! Keep practicing.';
+                    this.state.currentQuestion.lastFeedback=fb;
+                    this.state.currentQuestion.confidence=confidence;
+                    this.state.questionsAnswered++;
+                    this.state.totalConfidence+=confidence;
+                    feedbackEl.innerHTML=`<div style="padding: 16px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 12px; font-size: 14px; line-height: 1.6; border: 1px solid var(--border-default);"><p><strong>Feedback:</strong></p><p>${fb}</p><span class="score-badge">Score: ${score}/10</span></div>`;
+                    this.saveState();
+                    this.updateStats();
+                    this.showToast('Answer submitted and graded!','success');
+                    this.hideLoading();
+                },900);
+            },
+
+            showLoading(text='Processing...'){
+                const overlay=document.getElementById('loading-overlay');
+                const loadingText=document.getElementById('loading-text');
+                if(overlay&&loadingText){
+                    overlay.style.display='flex';
+                    loadingText.textContent=text;
+                }
+            },
+            hideLoading(){
+                const overlay=document.getElementById('loading-overlay');
+                if(overlay) overlay.style.display='none';
+            },
+
+            showToast(message,type='info'){
+                const container=document.getElementById('toast-container');
+                if(!container) return;
+                const toast=document.createElement('div');
+                toast.className=`toast ${type}`;
+                toast.innerHTML=`<span>${type==='success'?'✅':type==='error'?'❌':type==='warning'?'⚠️':'ℹ️'}</span><span>${message}</span>`;
+                container.appendChild(toast);
+                setTimeout(()=>{
+                    toast.style.animation='slideIn 0.3s ease reverse';
+                    setTimeout(()=>toast.remove(),300);
+                },3500);
+            },
+
+            removeTopic(i){
+                this.state.examData.topics.splice(i,1);
+                this.saveState();
+                this.renderTopicList();
+                this.updateStats();
+            },
+
+            completeCurrentQuestion(){
+                if(!this.state.currentQuestion) return;
+                this.state.revisionQueue=this.state.revisionQueue.filter(it=>it.id!==this.state.currentQuestion.id);
+                this.state.currentQuestion=null;
+                this.saveState();
+                this.updateRevisionView();
+                this.showToast('Question completed!','success');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
