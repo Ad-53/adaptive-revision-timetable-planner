@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RevisionAI - Adaptive Revision Timetable</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="script.css">
+    <!-- FullCalendar CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css">
+    
+    <!-- External Libraries (CDNs) -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+</head>
+
+<body>
+    <!-- Main Application Container -->
+    <div id="app">
+        
+        <!-- ========================================= -->
+        <!-- 🧭 NAVIGATION BAR -->
+        <!-- Sticky header with global navigation. Visible only when logged in. -->
+        <!-- ========================================= -->
+        <nav id="main-nav" class="hidden">
+            <div class="nav-brand">
+                <div class="logo-icon">📚</div>
+                <span class="logo-text">RevisionAI</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" onclick="app.showView('dashboard')" class="nav-link active" data-view="dashboard">
+                    <span class="nav-icon">📊</span> Dashboard
+                </a></li>
+                <li><a href="#" onclick="app.showView('flowchart')" class="nav-link" data-view="flowchart">
+                    <span class="nav-icon">🖼️</span> Flowchart Decomp
+                </a></li>
+                <li><a href="#" onclick="app.showView('revision')" class="nav-link" data-view="revision">
+                    <span class="nav-icon">🧠</span> Revision Mode
+                </a></li>
+            </ul>
+            <div class="nav-actions">
+                <button id="theme-toggle-btn" type="button" class="btn-icon" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button type="button" onclick="app.logout()" class="btn-logout">
+                    <span class="logout-icon">🚪</span> Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- ========================================= -->
+        <!-- 🔐 AUTHENTICATION VIEW -->
+        <!-- Handles user login and signup processes -->
+        <!-- ========================================= -->
+        <section id="view-auth" class="view">
+            <div class="auth-background">
+                <div class="auth-floating-shapes">
+                    <div class="shape shape-1"></div>
+                    <div class="shape shape-2"></div>
+                    <div class="shape shape-3"></div>
+                </div>
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <div class="auth-header">
+                            <div class="auth-logo">📚</div>
+                            <h2 id="auth-title">Welcome Back</h2>
+                            <p class="auth-subtitle" id="auth-subtitle">Sign in to continue your revision journey</p>
+                        </div>
+                        <form id="auth-form" class="auth-form">
+                            <div class="input-group">
+                                <label for="email">
+                                    <span class="input-icon">📧</span> Email Address
+                                </label>
+                                <input type="email" id="email" required placeholder="student@example.com" autocomplete="email">
+                            </div>
+                            <div class="input-group">
+                                <label for="password">
+                                    <span class="input-icon">🔒</span> Password
+                                </label>
+                                <input type="password" id="password" required placeholder="Enter your password" autocomplete="current-password">
+                            </div>
+                            <div id="auth-error" class="error-message hidden">
+                                <span class="error-icon">⚠️</span>
+                                <span class="error-text"></span>
+                            </div>
+                            <button type="submit" id="auth-submit-btn" class="btn-primary btn-large">
+                                <span class="btn-text">Sign In</span>
+                                <span class="btn-arrow">→</span>
+                            </button>
+                        </form>
+                        <div class="auth-divider">
+                            <span>or</span>
+                        </div>
+                        <p id="auth-toggle-text" class="auth-toggle">
+                            Don't have an account? <a href="#" onclick="app.toggleAuthMode()">Create one now</a>
+                        </p>
+                    </div>
+                    <p class="auth-footer">Powered by AI • AQA Exam Board</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================= -->
+        <!-- 📊 DASHBOARD VIEW -->
+        <!-- Main overview with exam details, calendar, and topic management -->
+        <!-- ========================================= -->
+        <section id="view-dashboard" class="view hidden">
+            <div class="container">
+                <!-- Dashboard Header -->
+                <div class="dashboard-header">
+                    <div class="header-content">
+                        <h1 class="page-title">Your Revision Dashboard</h1>
+                        <p class="page-subtitle">Adaptive schedule, exam countdown, and topic focus all in one place.</p>
+                    </div>
+                    <div class="header-actions">
+                        <div id="user-greeting" class="user-greeting">
+                            <span class="greeting-icon">👋</span>
+                            <span id="greeting-text">Welcome back!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Cards Row -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Days to Exam</span>
+                            <span class="stat-value" id="exam-countdown">--</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Topics Tracked</span>
+                            <span class="stat-value" id="topic-count">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Questions Answered</span>
+                            <span class="stat-value" id="questions-answered">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Avg Confidence</span>
+                            <span class="stat-value" id="avg-confidence">--%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Grid -->
+                <div class="dashboard-grid">
+                    <!-- Left Column: Exam Details & Topic Management -->
+                    <div class="dashboard-sidebar">
+                        <!-- Exam Details Card -->
+                        <div class="card exam-card">
+                            <div class="card-header">
+                                <h3>📋 Exam Details</h3>
+                                <span class="card-badge">AQA</span>
+                            </div>
+                            <form id="exam-form" class="exam-form">
+                                <div class="input-group">
+                                    <label for="exam-subject">Subject</label>
+                                    <input type="text" id="exam-subject" placeholder="e.g., Economics, Computer Science" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="exam-board">Exam Board</label>
+                                    <input type="text" id="exam-board" value="AQA" readonly class="input-readonly">
+                                </div>
+                                <div class="input-group">
+                                    <label for="exam-date">Exam Date</label>
+                                    <input type="date" id="exam-date" required>
+                                </div>
+                                <button type="submit" class="btn-primary">
+                                    <span>Update Schedule</span>
+                                    <span class="btn-icon-small">📅</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Topic Management Card -->
+                        <div class="card topic-card">
+                            <div class="card-header">
+                                <h3>📖 Topic Management</h3>
+                            </div>
+                            <div class="topic-input-row">
+                                <input type="text" id="topic-input" placeholder="Add a new topic...">
+                                <button type="button" id="add-topic-btn" class="btn-add-topic">
+                                    <span>+</span> Add
+                                </button>
+                            </div>
+                            <ul id="topic-list" class="topic-list">
+                                <!-- Topics will be dynamically added here -->
+                            </ul>
+                            <div class="topic-empty-state" id="topic-empty-state">
+                                <span class="empty-icon">📝</span>
+                                <p>No topics added yet. Add topics to start planning your revision.</p>
+                            </div>
+                            <button type="button" id="generate-plan-btn" class="btn-generate-plan hidden">
+                                <span>🚀</span> Generate Adaptive Plan
+                            </button>
+                        </div>
+
+                        <!-- Revision Summary -->
+                        <div class="card summary-card">
+                            <div class="card-header">
+                                <h3>📊 Revision Summary</h3>
+                            </div>
+                            <p id="revision-summary" class="summary-text">Add topics and generate a plan to see your revision progress.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Calendar -->
+                    <div class="card calendar-card">
+                        <div class="card-header">
+                            <h3>📅 Revision Schedule</h3>
+                            <div class="calendar-legend">
+                                <span class="legend-item">
+                                    <span class="legend-dot exam-dot"></span> Exam
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-dot review-dot"></span> Review
+                                </span>
+                                <span class="legend-item">
+                                    <span class="legend-dot plan-dot"></span> Planned
+                                </span>
+                            </div>
+                        </div>
+                        <div id="calendar" class="calendar-container"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================= -->
+        <!-- 🖼️ FLOWCHART DECOMPOSITION VIEW -->
+        <!-- Upload images and decompose into structured flowcharts -->
+        <!-- ========================================= -->
+        <section id="view-flowchart" class="view hidden">
+            <div class="container">
+                <div class="view-header">
+                    <h1 class="page-title">🖼️ Flowchart Decomposition</h1>
+                    <p class="page-subtitle">Upload a picture of your flowchart to decompose it into a structured tree using AI.</p>
+                </div>
+
+                <div class="flowchart-grid">
+                    <!-- Upload Area -->
+                    <div class="card upload-card">
+                        <div class="card-header">
+                            <h3>📤 Upload Flowchart</h3>
+                        </div>
+                        <div class="upload-area" id="drop-zone">
+                            <input type="file" id="flowchart-upload" accept="image/*" class="hidden">
+                            <label for="flowchart-upload" class="upload-label">
+                                <div class="upload-icon">🖼️</div>
+                                <span class="upload-title">Click or Drag & Drop Image Here</span>
+                                <span class="upload-hint">Supports PNG, JPG, WEBP</span>
+                            </label>
+                        </div>
+                        <div id="upload-status" class="status-message hidden">
+                            <span class="status-icon"></span>
+                            <span class="status-text"></span>
+                        </div>
+                    </div>
+
+                    <!-- Mermaid Output -->
+                    <div class="card mermaid-card">
+                        <div class="card-header">
+                            <h3>🌳 Decomposed Structure</h3>
+                            <button type="button" id="export-mermaid-btn" class="btn-export hidden">
+                                <span>📋</span> Copy Mermaid Code
+                            </button>
+                        </div>
+                        <div id="mermaid-container" class="mermaid-container">
+                            <div class="mermaid-empty-state">
+                                <span class="empty-icon">📊</span>
+                                <p>Upload an image to see the decomposed flowchart structure here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Templates Section -->
+                <div class="card templates-card">
+                    <div class="card-header">
+                        <h3>💡 Code Templates</h3>
+                        <p class="card-description">Quick reference for common flowchart patterns</p>
+                    </div>
+                    <div class="templates-grid">
+                        <div class="template-item" onclick="app.loadTemplate('forLoop')">
+                            <span class="template-icon">🔄</span>
+                            <span class="template-name">For Loop</span>
+                        </div>
+                        <div class="template-item" onclick="app.loadTemplate('whileLoop')">
+                            <span class="template-icon">🔁</span>
+                            <span class="template-name">While Loop</span>
+                        </div>
+                        <div class="template-item" onclick="app.loadTemplate('recursion')">
+                            <span class="template-icon">🔀</span>
+                            <span class="template-name">Recursion</span>
+                        </div>
+                        <div class="template-item" onclick="app.loadTemplate('ifElse')">
+                            <span class="template-icon">🔀</span>
+                            <span class="template-name">If/Else</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================= -->
+        <!-- 🧠 REVISION MODE VIEW -->
+        <!-- Focus mode with AI questioning, marking, and confidence tracking -->
+        <!-- ========================================= -->
+        <section id="view-revision" class="view hidden">
+            <div class="container">
+                <div class="view-header">
+                    <div>
+                        <h1 class="page-title">🧠 Focus Mode</h1>
+                        <p class="page-subtitle">Active revision with AI-powered questioning and adaptive scheduling.</p>
+                    </div>
+                    <div class="revision-mode-actions">
+                        <button type="button" id="complete-question-btn" class="btn-complete hidden">
+                            <span>✅</span> Complete & Next
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <span class="progress-label">Session Progress</span>
+                        <span class="progress-value" id="progress-value">0/0</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="revision-grid">
+                    <!-- Question Area -->
+                    <div class="card question-card">
+                        <div class="question-header">
+                            <div class="topic-badge" id="question-topic-badge">
+                                <span class="badge-icon">📚</span>
+                                <span id="question-topic">Ready to Start</span>
+                            </div>
+                            <div class="question-marks" id="question-marks">
+                                <span class="marks-icon">🎯</span>
+                                <span id="marks-text">-- marks</span>
+                            </div>
+                        </div>
+                        <div id="question-content" class="question-text">
+                            <div class="question-empty-state">
+                                <span class="empty-icon">💡</span>
+                                <p>Press <strong>"Next Question"</strong> to load your first adaptive question based on your revision plan.</p>
+                            </div>
+                        </div>
+                        <hr class="divider">
+                        <div class="input-group">
+                            <label for="user-answer">
+                                <span class="label-icon">✍️</span> Your Answer
+                            </label>
+                            <textarea id="user-answer" rows="8" placeholder="Type your response here... Take your time to explain your reasoning."></textarea>
+                            <span class="char-count" id="char-count">0 characters</span>
+                        </div>
+                        <div class="answer-actions">
+                            <button id="submit-answer-btn" class="btn-primary btn-large">
+                                <span>Submit Answer</span>
+                                <span class="btn-icon-small">📝</span>
+                            </button>
+                            <button type="button" id="next-question-btn" class="btn-secondary btn-large">
+                                <span>Next Question</span>
+                                <span class="btn-arrow">→</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar: Feedback & Queue -->
+                    <div class="revision-sidebar">
+                        <!-- Feedback Card -->
+                        <div class="card feedback-card">
+                            <div class="card-header">
+                                <h3>📊 AI Feedback</h3>
+                                <span id="feedback-score" class="score-badge hidden">--/--</span>
+                            </div>
+                            <div id="feedback-content" class="feedback-text">
+                                <div class="feedback-empty-state">
+                                    <span class="empty-icon">💬</span>
+                                    <p>Submit an answer to receive AI-powered feedback.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confidence Card -->
+                        <div class="card confidence-card">
+                            <div class="card-header">
+                                <h3>🎯 Confidence Level</h3>
+                            </div>
+                            <div class="confidence-section">
+                                <label for="confidence-slider">How confident are you in your answer?</label>
+                                <div class="slider-container">
+                                    <input type="range" id="confidence-slider" min="1" max="10" value="5">
+                                    <div class="slider-labels">
+                                        <span>Not confident</span>
+                                        <span>Very confident</span>
+                                    </div>
+                                </div>
+                                <div class="confidence-display">
+                                    <span id="confidence-value" class="confidence-number">5</span>
+                                    <span class="confidence-label">out of 10</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Revision Queue -->
+                        <div class="card queue-card">
+                            <div class="card-header">
+                                <h3>📋 Revision Queue</h3>
+                                <span class="queue-count" id="queue-count">0 topics</span>
+                            </div>
+                            <ol id="topic-queue-list" class="topic-queue-list">
+                                <!-- Queue items will be dynamically added here -->
+                            </ol>
+                            <div class="queue-empty-state" id="queue-empty-state">
+                                <span class="empty-icon">📝</span>
+                                <p>No topics in queue. Generate a plan from the dashboard.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p id="loading-text">Processing...</p>
+            </div>
+        </div>
+
+        <!-- Toast Notification Container -->
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <!-- Script inclusion -->
+    <script src="function.js"></script>
+</body>
+</html>
