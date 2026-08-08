@@ -1,0 +1,261 @@
+﻿Ideas
+
+
+
+
+AI Login:
+Email: rangarajkavin85@gmail.com
+Password: qydryC-nifmo3-quzryz
+
+
+
+
+
+
+
+
+a
+
+
+- Education
+Adaptive revision timetable - this is the one that we have decided to go for
+
+
+- Health and Wellness
+Fitness trackers
+- Accessibility
+Path finding
+- Sustainability
+
+
+- Productivity
+Get off your phone app
+Photo of flowchart 
+Educational instareals
+- Finance
+Student budgeting app (predicts money problems before they happen)
+Subscription tracker (flags unused recurring charges, helps to / automatically cancels them)
+- Cybersecurity
+
+
+- Community Impact
+
+
+- Student Life
+
+
+- Creative Technology
+Sarcastic Real time code review
+- Non-Profit
+
+
+frameworks / languages
+
+
+Frontend - html css and js
+Backend - python with fastapi
+Screen reader
+Git, Github, venv and uvicorn
+To initially get and work with the project (once set up on github) run the command:
+Git clone link to the repo
+
+
+When you have this open the project folder in vscode(the folder should be in) documents/github/name of project
+make a terminal by going to View, then Terminal or Control/Cmd + ‘ 
+Then run the command:
+python3 -m venv venv
+Then on Mac/Linux run:
+source venv/bin/activate
+Or on Windows run:
+venv\Scripts\Activate.ps1
+Then run: 
+pip install -r requirements.txt
+Now deactivate the venv by running:
+Deactivate
+
+
+When adding a new feature to the project run MAKE SURE YOU DEACTIVATE THE VENV:
+git branch name of feature
+Git switch name of feature
+
+
+After making a function or change to the code commit the change by running:
+Git add name of file you have changed
+Git commit -m ‘short description of the the change you have made e.g added subtraction function’
+
+
+When you have finished or made significant progress and you want others to use, ensuring everything is committed, push you change to the repo by running:
+Git push origin name of branch
+
+
+On the repo website there should be an option to make a pull request. Complete this and there should be another option to merge the pull request. Sort out any merge conflicts and then merge your changes to the main branch. 
+
+
+To then get these changes your local project, run:
+Git pull origin main
+
+
+This should be all you have to do on git and github
+Do not use git commands inside the venv
+Try not to edit the same file as others to avoid merge conflicts
+Run:
+Git status to see staged files to be committed
+Git log to see previous commits
+
+
+To run the website with the backend:
+Make sure jack has made the basic code for the backend. Then open the venv by running 
+source venv/bin/activate  on mac
+venv\Scripts\Activate.ps1 on windows
+
+
+Then run the command:
+Uvicorn main:app --reload
+Open the website on the link provided
+If saved changes are not appearing on the website do: control/cmd + shift + r
+Disable the website by running control/cmd + c in the terminal
+
+
+I would have a separate terminal open for the uvicorn commands in venv and git commands
+
+
+
+
+Flow chart
+Ai model: Qwen/Qwen2-VL-7B-Instruct or Qwen/Qwen3-VL-8B-Instruct 
+mermaid.js 
+Decomp:
+* Website should take in a picture:
+* Picture sent to backend
+* Ai model wil be used to read the word and shape around them
+* Shape, contents of shape and connecting nodes will be sent in a tree structure to frontend
+* Front end uses mermaid.js to display new flowchart
+Desirable features (not essential)
+* Default code templates(e.g templates for for and while loops as well as recursion and other stuff)
+
+
+Adaptive revision:
+calendarJS
+* User adds exams, exam board and date of exam to web
+* Web scrapes exam and mark scheme
+* Ai asks and marks question for each topic
+* Worse topic appear more on the calender
+Desirable features
+* Focus mode for revision day - ask question and review
+* Scale of confidence 1-10
+
+
+________________
+
+
+Decomposition
+* User login
+   * Sub bullet point
+- user should be able to enter exam board subject and date of exam
+- AI should then ask questions for each subject based on paper from pmt
+- AI marks response
+- timetable is planned where topic with least confidence appears more often
+- Focus mode for revision day - ask question and review
+- Scale of confidence 1-10
+
+
+
+
+Phase
+	Input
+	Processing Module
+	System Output / State Change
+	Setup
+	Exam Board, Subject, Exam Date
+	Curriculum Module
+	Creates exam deadline countdown and syllabus topic tree.
+	Diagnostics
+	Target Topic Selection
+	Assessment Engine
+	Pulls PMT paper question & mark scheme.
+	Evaluation
+	User Answer
+	Assessment Engine
+	AI grades response, records accuracy + 1–10 confidence score.
+	Adaptation
+	Confidence Score + Days to Exam
+	Scheduling Algorithm
+	Recalculates topic weightings and updates upcoming calendar slots.
+	Execution
+	Daily Session Start
+	Focus Mode Engine
+	Serves prioritized queue of high-urgency/low-confidence topics.
+	Only work with aqa
+Tasks list
+* User login and management
+DECISION:
+Pick authentication approach: build custom (Node + JWT) or hosted provider (Firebase Auth / Supabase Auth) - provider would be best for hackathons speed
+
+
+DATA: 
+Design users table (id, email, hashed password, display name)
+Link user id to exam data (subjects, level of confidence etc)
+Decide session storage
+
+
+BACKEND (some of these points can be skipped if we choose to use a provider):
+Signup endpoint (validate email, check dupes, hash password, create user)
+Login endpoint (verify credentials, issue token/session)
+Logout endpoint (invalidate token/session)
+“Get current user” endpoint (check login state on page load)
+Forgot/reset password process (request email, reset token etc)
+(OPTIONAL) Email verification on signup 
+Rate limiting on login attempts
+
+
+
+
+
+
+FRONTEND
+Signup page (form + validation + error messages)
+Login page (form + forgot/reset password link + error messages)
+Forgot password page: request + reset forms
+Show username + logout button
+Logout
+
+
+PROFILE / ACCOUNT MANAGEMENT
+Profile page - view email/name
+(OPTIONAL) Change password???? 
+(OPTIONAL) Update display name
+
+
+TESTING CASES:
+Wrong password
+Expired token
+Duplicate sign up email
+Empty form submissions
+Logout clears state when refreshed
+
+
+
+
+
+
+* Featherless ai
+Client wrapping module: should wrap function calls to API endpoint
+PDF scraped papers should be fed to the ai
+Functions: GenerateQuestion() and MarkQuestion()
+Endpoints:
+POST /questions/generate
+POST /questions/{id}/submit
+
+
+Store scores in a response table
+
+
+* Pdf scraping from pmt to questions and answers for ai
+   * Use pdf plumber
+        Question object:
+{ "id": "resp_987", "user_id": "usr_supabase_uuid", "question_id": "q_aqa_econ_012", "topic_name": "Price Elasticity of Supply", "user_answer": "1. Storage limits... 2. Time to grow crops...", "ai_score_awarded": 3, "ai_max_score": 4, "ai_feedback": "Identified both factors correctly. Explanation for harvest time needed more detail regarding production lag.", "user_confidence_rating": 6, "created_at": "2026-08-07T13:40:42Z" } 
+If the question contains an image or a table dont include it.
+Content is found for a question inbetween question numbers
+Extract raw text 
+Question number are in the format ‘x y’ where x is the tens and y are the units
+Images and tables are indicated by by ‘figure x’ so exclude if that is the case

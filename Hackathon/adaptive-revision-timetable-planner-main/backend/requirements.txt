@@ -1,0 +1,5 @@
+# Backend dependencies for team's Express.js server
+# Note: This is an Express.js project that uses Node.js, not Python
+# The requirements.txt file should be removed or replaced with package.json
+
+# This file is kept for compatibility but the actual dependencies are in package.json
