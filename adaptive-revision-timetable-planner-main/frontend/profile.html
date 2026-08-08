@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Profile - Adaptive Revision</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-theme="light">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">📚 Adaptive Revision</h1>
+            <div class="nav-right">
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <button id="theme-toggle-btn" class="icon-btn">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <a href="/logout" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="profile-container">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <span id="avatar-initials">U</span>
+                </div>
+                <h1 id="profile-name" class="profile-name">User Name</h1>
+                <p id="profile-email" class="email-display"></p>
+            </div>
+
+            <!-- Profile Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-info">
+                        <div id="total-questions" class="stat-value">0</div>
+                        <div class="stat-label">Questions Answered</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <div id="avg-score" class="stat-value">--%</div>
+                        <div class="stat-label">Avg Score</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-info">
+                        <div id="member-since" class="stat-value">--</div>
+                        <div class="stat-label">Member Since</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Actions -->
+            <section class="section">
+                <h2>Account Settings</h2>
+                <div class="card">
+                    <div class="action-item">
+                        <span class="action-icon">🔒</span>
+                        <div class="action-content">
+                            <strong>Password Security</strong>
+                            <p>Your password is stored securely. Change it if needed.</p>
+                        </div>
+                        <button id="change-password-btn" class="btn btn-secondary">Change Password</button>
+                    </div>
+
+                    <div class="action-item">
+                        <span class="action-icon">📧</span>
+                        <div class="action-content">
+                            <strong>Email Notifications</strong>
+                            <p>Receive updates about your revision progress.</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="email-notifications" checked />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="action-item">
+                        <span class="action-icon">🎯</span>
+                        <div class="action-content">
+                            <strong>Focus Mode</strong>
+                            <p>Enable focus mode for revision days.</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="focus-mode" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="section">
+                <h2>Recent Activity</h2>
+                <div id="activity-list" class="card">
+                    <p class="empty-state">No recent activity.</p>
+                </div>
+            </section>
+
+            <!-- Logout Button -->
+            <div style="text-align: center; margin-top: 16px;">
+                <a href="/logout" class="btn btn-danger">Log Out</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden">
+        <div class="loading-spinner"></div>
+        <div id="loading-text">Loading...</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/requireAuth.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>

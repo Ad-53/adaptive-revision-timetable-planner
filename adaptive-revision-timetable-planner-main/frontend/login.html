@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Log In - Adaptive Revision</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body data-theme="light">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h1>Welcome Back</h1>
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-input" required placeholder="you@example.com" />
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" required placeholder="Enter your password" />
+                </div>
+                <button type="submit" class="btn btn-primary btn-full-width">Sign In</button>
+            <div id="message" class="message hidden"></div>
+            </form>
+            <div style="text-align: center; margin-top: 16px;">
+                <a href="/forgot-password" style="font-size: 14px; color: var(--primary);">Forgot password?</a><br /><br />
+                Don't have an account? <a href="/signup" style="font-size: 14px; color: var(--primary);">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/requireAuth.js"></script>
+    <script src="js/login.js"></script>
+</body>
+</html>
