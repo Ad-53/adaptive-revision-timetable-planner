@@ -3,13 +3,14 @@ import json
 import re
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import AsyncOpenAI
+import asyncio
 
 #load environment variables from .env file
 load_dotenv()
 
 #Use Open AI to redirect to featherless API
-client = OpenAI(
+client = AsyncOpenAI(
     base_url="https://api.featherless.ai/v1",
     api_key=os.getenv("FEATHERLESS_API_KEY")
 )
@@ -121,37 +122,33 @@ def mark_question(
         "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     }
 
-def get_topic(content: str) -> dict:
-    """Classifies a question's content into an AQA specification topic and subtopic."""
-
+async def get_topic(content: str) -> dict:
     system_prompt = (
-        "You are an expert UK A-Level Computer Science examiner for the AQA board.\n"
+        "You are an expert UK A-Level examiner for the AQA board.\n"
         "Your task is to analyze a given exam question and map it to the exact section/topic "
-        "from the official AQA A-Level Computer Science specification (7516/7517).\n\n"
+        "from the official AQA specification.\n\n"
         "CRITICAL INSTRUCTION:\n"
         "You must respond ONLY with a raw JSON object containing these exact keys:\n"
         '- "topic_code": (string) e.g., "3.1.1" or "4.5.1"\n'
-        '- "topic_name": (string) e.g., "Data structures", "Fundamentals of algorithms", "Data representation"\n'
-        '- "subtopic": (string) e.g., "Stacks and Queues", "Vector graphics", "Big-O notation"\n\n'
+        '- "topic_name": (string)"\n'
+        '- "subtopic": (string)"\n\n'
         "Do NOT wrap the output in markdown code blocks or add text outside the JSON."
     )
 
     user_prompt = f"Question Content:\n{content}"
 
-    response = client.chat.completions.create(
+    # Added 'await'
+    response = await client.chat.completions.create(
         model=MODEL_ID,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        temperature=0.1,  # Low temperature for deterministic classification
-        response_format={"type": "json_object"},
+        temperature=0.1
     )
 
     raw_ai_text = response.choices[0].message.content
-    topic_data = clean_json_string(raw_ai_text)
+    return clean_json_string(raw_ai_text)
 
-    return topic_data
 
-print(get_topic('0 1 . 2 In Backus-Naur Form (BNF) the following production rule has been written to define a digit: <digit> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 Write a BNF production rule to define a natural number that is equivalent to the definition in the syntax diagram in Figure 1. [2 marks] Turn over ► IB/M/Jun17/7517/1 4'))
 
