@@ -16,12 +16,13 @@ with io.BytesIO(paperPDF.content) as stream:
 # Replace newlines with spaces so word boundaries remain intact
 paperStr = paperStr.replace('\n', ' ')
 
-# REGEX EXPLANATION:
-# (?:\b|\s)        -> Starts at a word boundary or whitespace
-# (\d\s*\d(?:\s*\.\s*\d+)?) -> Captures '0 1', '01', or sub-questions like '0 1 . 1' or '01.1'
-# (?!\s*2\b)       -> NEGATIVE LOOKAHEAD: Ensures '0 1' is NOT immediately followed by '2' (skips grids)
-# (?=\s+[A-Z\.\d]) -> POSITIVE LOOKAHEAD: Ensures it's followed by a dot or sentence text
-pattern = r'((?:\b|\s)\d\s*\d(?:\s*\.\s*\d+)?(?!\s*2\b)(?=\s+[A-Z\.\d]))'
+# UPDATED REGEX EXPLANATION:
+# (?:\b|\s)                        -> Starts at a word boundary or whitespace
+# (0\s*[1-9]|1\s*[0-2])           -> Restricts main question numbers to 01-12 (with optional internal space)
+# (?:\s*\.\s*\d+)?                 -> Optional sub-question dot and digits (e.g., .1 or . 1)
+# (?!\s*2\b)                       -> Skips 2D grid headers where 0 1 is followed by 2
+# (?=\s+[A-Z\.\d])                 -> Ensures followed by text, dot, or digit
+pattern = r'((?:\b|\s)(?:0\s*[1-9]|1\s*[0-2])(?:\s*\.\s*\d+)?(?!\s*2\b)(?=\s+[A-Z\.\d]))'
 
 paperLst = re.split(pattern, paperStr)
 
@@ -41,59 +42,88 @@ for item in paperLst:
     item_clean = item.strip()
     if re.match(pattern, item_clean):
         # Extract normalized question identifier (e.g., '01' or '01.1')
-        match = re.match(r'^(\d\s*\d(?:\s*\.\s*\d+)?)', item_clean)
+        match = re.match(r'^((?:0\s*[1-9]|1\s*[0-2])(?:\s*\.\s*\d+)?)', item_clean)
         q_identifier = re.sub(r'\s+', '', match.group(1)) if match else ""
         
         # Extract marks if present at the end [X mark(s)]
         marks_match = re.search(r'\[(\d+)\s*marks?\]', item_clean, re.IGNORECASE)
         marks = marks_match.group(1) if marks_match else None
         
-        
         returnLst.append({
             "question": q_identifier,
             "marks": marks,
-            "content": item_clean
+            "content": item_clean,
+            "answer": ''
         })
-        for i in returnLst:
-            print(i)
+
 
         
 
 
 
-#marks
+# 1. Extract tables and stringify
 marksLst = []
 with io.BytesIO(marksPDF.content) as stream:
-   with pdfplumber.open(stream) as pdf:
-        marksLst = [i.extract_table() for i in pdf.pages if i.extract_table is not None]
+    with pdfplumber.open(stream) as pdf:
+        marksLst = [page.extract_tables() for page in pdf.pages if page.extract_tables()]
 
 marksStr = str(marksLst)
-#tidy the new string
 marksStr = (
     marksStr
-    .replace('None','')
+    .replace('None', '')
     .replace('[', '')
     .replace(']', '')
     .replace("'", '')
-    .replace(r'\n', ' ')  
-    .replace('\n', ' ')  
+    .replace(r'\n', ' ')
+    .replace('\n', ' ')
 )
-markLst = re.split(r'(\b\d{2},\s*\d\b)', marksStr) #regex pattern
-markLst.pop(0)
 
+# 2. Regex specifically matching the "01, 1," header format from your output
+entry_pattern = re.compile(r'(?:\b|^)(\d{2}),\s*(\d+),')
 
-i=0
-while i < len(markLst)-1:
-    if re.match(r'\b\d{2},\s*\d\b', markLst[i]):
-        markLst[i] = markLst[i]+markLst[i+1]
-        markLst.pop(i+1)
-        i+=1
+matches = list(entry_pattern.finditer(marksStr))
+mark_dict = {}
+
+# 3. Parse entries using match character offsets
+for idx, match in enumerate(matches):
+    main_q = match.group(1)  # e.g. "01"
+    sub_q = match.group(2)   # e.g. "1"
+    q_id = f"{main_q}.{sub_q}"
+    
+    start_pos = match.end()
+    end_pos = matches[idx + 1].start() if idx + 1 < len(matches) else len(marksStr)
+    
+    raw_block = marksStr[start_pos:end_pos].strip()
+    
+    # Clean trailing comma if present at the end of the text block
+    if raw_block.endswith(','):
+        raw_block = raw_block[:-1].strip()
+    
+    # Extract trailing mark digit (e.g. ", 3" at the end of "One mark per correct row, 3")
+    marks_match = re.search(r',\s*(\d+)\s*$', raw_block)
+    
+    if marks_match:
+        extracted_marks = int(marks_match.group(1))
+        answer_text = raw_block[:marks_match.start()].strip()
     else:
-       i+=1
+        extracted_marks = None
+        answer_text = raw_block
+        
+    mark_dict[q_id] = {
+        "answer": answer_text,
+        "marks": extracted_marks
+    }
 
-formattedMarkLst = []
-for i in markLst:
-   formattedMarkLst.append({'question':i[:6],
-                            'content':i[6:-3],
-                            'marks':i[-3:]
-                            })
+# 4. Map back to returnLst
+for item in returnLst:
+    q_key = item.get("question")  # e.g., "01.1", "02.1"
+    
+    if q_key in mark_dict:
+        item["answer"] = mark_dict[q_key]["answer"]
+        if item.get("marks") is None or item.get("marks") == '':
+            item["marks"] = mark_dict[q_key]["marks"]
+    else:
+        item["answer"] = "Answer not found in scheme"
+
+for i in returnLst:
+    print(i)
