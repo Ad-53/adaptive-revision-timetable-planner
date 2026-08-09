@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Profile - Adaptive Revision</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="navbar">
+  <a href="profile.html">Adaptive Revision</a>
+  <div>
+    <span id="nav-name"></span>
+    <button class="btn secondary" id="logout-btn" style="width:auto; margin-left:12px;">Log out</button>
+  </div>
+</div>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <h1>Your profile</h1>
+    <div id="message" class="message hidden"></div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" disabled />
+    </div>
+
+    <form id="name-form">
+      <div class="field">
+        <label for="displayName">Display name</label>
+        <input type="text" id="displayName" required />
+      </div>
+      <button type="submit" class="btn">Update name</button>
+    </form>
+
+    <hr style="margin:24px 0; border:none; border-top:1px solid #e2e4e9;" />
+
+    <form id="password-form">
+      <div class="field">
+        <label for="newPassword">New password</label>
+        <input type="password" id="newPassword" minlength="6" placeholder="Leave blank to keep current password" />
+      </div>
+      <button type="submit" class="btn secondary">Change password</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/requireAuth.js"></script>
+<script src="js/profile.js"></script>
+</body>
+</html>

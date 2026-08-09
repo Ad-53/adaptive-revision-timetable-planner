@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Sign Up - Adaptive Revision</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <h1>Create your account</h1>
+    <div id="message" class="message hidden"></div>
+    <form id="signup-form">
+      <div class="field">
+        <label for="displayName">Display name</label>
+        <input type="text" id="displayName" required />
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" required minlength="6" />
+      </div>
+      <div class="field">
+        <label for="confirmPassword">Confirm password</label>
+        <input type="password" id="confirmPassword" required minlength="6" />
+      </div>
+      <button type="submit" class="btn">Sign up</button>
+    </form>
+    <div class="links">Already have an account? <a href="login.html">Log in</a></div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/requireAuth.js"></script>
+<script src="js/signup.js"></script>
+</body>
+</html>

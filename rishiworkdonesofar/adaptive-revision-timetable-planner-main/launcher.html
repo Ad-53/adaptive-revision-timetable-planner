@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RevisionAI - Launch Application</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            padding: 20px;
+        }
+        .container { 
+            text-align: center; 
+            color: white; 
+            padding: 50px; 
+            background: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(10px); 
+            border-radius: 20px; 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            max-width: 600px;
+        }
+        .logo { font-size: 80px; margin-bottom: 20px; display: block; }
+        h1 { font-size: 42px; font-weight: 700; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        p { font-size: 18px; opacity: 0.9; margin-bottom: 20px; line-height: 1.6; }
+        .btn { 
+            display: inline-block; 
+            padding: 16px 32px; 
+            background: linear-gradient(90deg, #00d4ff, #7c3aed); 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 50px; 
+            font-weight: 600; 
+            font-size: 18px; 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            border: none; 
+            cursor: pointer;
+            margin: 10px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4); }
+        .btn:active { transform: translateY(0); }
+        .status { 
+            margin-top: 20px; 
+            padding: 15px; 
+            border-radius: 10px; 
+            font-size: 16px;
+            display: none;
+        }
+        .status.success { background: rgba(76, 175, 80, 0.9); display: block; }
+        .status.error { background: rgba(244, 67, 54, 0.9); display: block; }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span class="logo">📚</span>
+        <h1>RevisionAI</h1>
+        <p>Your adaptive revision timetable planner powered by AI</p>
+        <p>Click the button below to open the application.</p>
+        
+        <button id="launch-btn" class="btn">🚀 Open Application</button>
+        
+        <div class="spinner" id="spinner"></div>
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const launchBtn = document.getElementById('launch-btn');
+        const spinner = document.getElementById('spinner');
+        const statusEl = document.getElementById('status');
+
+        async function checkServerHealth() {
+            try {
+                // Check if uvicorn is running by hitting the health endpoint
+                const response = await fetch('http://127.0.0.1:8000/health', { method: 'GET' });
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        async function launchApp() {
+            // Show loading state
+            launchBtn.style.display = 'none';
+            spinner.style.display = 'block';
+            statusEl.className = 'status';
+            statusEl.textContent = 'Checking server status...';
+
+            try {
+                // Check if server is already running
+                const serverRunning = await checkServerHealth();
+                
+                if (serverRunning) {
+                    // Server is running, just open the browser
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✓ Server is running! Opening application...';
+                    
+                    setTimeout(() => {
+                        window.location.href = 'http://127.0.0.1:8000/';
+                    }, 1000);
+                } else {
+                    // Server not running, show instructions
+                    statusEl.className = 'status';
+                    statusEl.textContent = 'Server is not running.\n\nPlease start the server first:\n\n1. Open a terminal in this folder\n2. Run: venv\\Scripts\\Activate.ps1\n3. Run: uvicorn main:app --reload\n4. Then click "Open Application" button';
+                    spinner.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Launch error:', error);
+                statusEl.className = 'status error';
+                statusEl.textContent = '✗ Error checking server. Please start the server manually first.';
+                spinner.style.display = 'none';
+            }
+        }
+
+        launchBtn.addEventListener('click', launchApp);
+    </script>
+</body>
+</html>
