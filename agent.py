@@ -11,27 +11,28 @@ load_dotenv()
 #Use Open AI to redirect to featherless API
 client = OpenAI(
     base_url="https://api.featherless.ai/v1",
-    api_key=os.environ.get("FEATHERLESS_API_KEY")
+    api_key=os.getenv("FEATHERLESS_API_KEY")
 )
-
 MODEL_ID = "deepseek-ai/DeepSeek-V4-Flash-0731" #using featherless api to use meta-llama model for question answering
 
-def clean_json_string(raw_string: str) -> str:
-
+def clean_json_string(raw_string: str) -> dict:
     """
-    Cleans a raw JSON string by removing unnecessary whitespace and formatting issues.
-    e.g. '...JSON..,,,..' becomes 'JSON'
-    Used to put strings into python dictionaries
+    Extracts and parses the first valid JSON object found in raw_string.
     """
-
     try:
-        cleaned = re.sub(r"^```json\s*", "", raw_string.strip(), flags=re.IGNORECASE)
-        cleaned = re.sub(r"\s*```$", "", cleaned).strip()
-        return json.loads(cleaned)
-    except json.JSONDecodeError:
+        # Locate the outermost curly braces in the response
+        match = re.search(r'\{.*\}', raw_string, re.DOTALL)
+        if match:
+            json_str = match.group(0)
+            return json.loads(json_str)
+        else:
+            raise ValueError("No JSON object found in string.")
+            
+    except Exception as e:
+        print(f"\n[DEBUG] Raw AI text that failed parsing:\n{raw_string}\n")
         return {
-            "ai_score_awarded" : 0,
-            "ai_feedback" : "The AI was unable to parse the JSON string. Please ensure the string is valid JSON and try again."
+            "ai_score_awarded": 0,
+            "ai_feedback": "The AI response could not be parsed into valid JSON."
         }
 
 def generate_question(topic: str, scraped_content: str) -> str:
@@ -119,3 +120,38 @@ def mark_question(
         "user_confidence_rating": user_confidence,
         "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     }
+
+def get_topic(content: str) -> dict:
+    """Classifies a question's content into an AQA specification topic and subtopic."""
+
+    system_prompt = (
+        "You are an expert UK A-Level Computer Science examiner for the AQA board.\n"
+        "Your task is to analyze a given exam question and map it to the exact section/topic "
+        "from the official AQA A-Level Computer Science specification (7516/7517).\n\n"
+        "CRITICAL INSTRUCTION:\n"
+        "You must respond ONLY with a raw JSON object containing these exact keys:\n"
+        '- "topic_code": (string) e.g., "3.1.1" or "4.5.1"\n'
+        '- "topic_name": (string) e.g., "Data structures", "Fundamentals of algorithms", "Data representation"\n'
+        '- "subtopic": (string) e.g., "Stacks and Queues", "Vector graphics", "Big-O notation"\n\n'
+        "Do NOT wrap the output in markdown code blocks or add text outside the JSON."
+    )
+
+    user_prompt = f"Question Content:\n{content}"
+
+    response = client.chat.completions.create(
+        model=MODEL_ID,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.1,  # Low temperature for deterministic classification
+        response_format={"type": "json_object"},
+    )
+
+    raw_ai_text = response.choices[0].message.content
+    topic_data = clean_json_string(raw_ai_text)
+
+    return topic_data
+
+print(get_topic('0 1 . 2 In Backus-Naur Form (BNF) the following production rule has been written to define a digit: <digit> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 Write a BNF production rule to define a natural number that is equivalent to the definition in the syntax diagram in Figure 1. [2 marks] Turn over ► IB/M/Jun17/7517/1 4'))
+
