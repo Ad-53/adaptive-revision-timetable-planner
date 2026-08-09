@@ -11,3 +11,4 @@ app.mount("/static", StaticFiles(directory="static"), "static")
 @app.get("/")
 async def root():
     return FileResponse("template/login.html")
+

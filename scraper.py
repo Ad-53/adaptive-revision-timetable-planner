@@ -2,8 +2,11 @@ import pdfplumber
 import re
 import requests
 import io
+import asyncio
+from agent import get_topic
+from random import sample
 
-def get_questions(topic, year, paperNo):
+async def get_questions(topic, year, paperNo):
     if ' ' in topic:
         topicName = topic.replace(' ','-')
         word1, word2 = topic.split(' ')
@@ -62,7 +65,8 @@ def get_questions(topic, year, paperNo):
                 "question": q_identifier,
                 "marks": marks,
                 "content": item_clean,
-                "answer": ''
+                "answer": '',
+                "topic":''
             })
 
 
@@ -134,9 +138,24 @@ def get_questions(topic, year, paperNo):
                 item["marks"] = mark_dict[q_key]["marks"]
         else:
             item["answer"] = "Answer not found in scheme"
+    returnLst = sample(returnLst,3)
+    returnLst = await populate_topics(returnLst)
 
     return returnLst
 
-questions = get_questions('Chemistry', '2018', '1')
-for i in questions:
-    print(i)
+async def populate_topics(returnLst: list) -> list:
+    # 1. Create a task for each question
+    semaphore = asyncio.Semaphore(1)
+    async def process_item(item):
+        async with semaphore:
+            item["topic"] = await get_topic(item["content"])
+            return item
+
+    # 2. Fire all API calls concurrently
+    return await asyncio.gather(*[process_item(item) for item in returnLst])
+
+async def printLst():
+    test = await get_questions('Chemistry','2018','1')
+    print(test)
+
+asyncio.run(printLst())
